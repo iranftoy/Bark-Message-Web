@@ -1,4 +1,4 @@
-# bark-message-web
+# Bark-Message-Web
 This is a WebUI that send message to Bark app on Apple devices.
 
 You just need to input your **Device Key** to send a message.
