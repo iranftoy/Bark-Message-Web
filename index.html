@@ -66,63 +66,110 @@
             color: #721c24;
         }
 
-        .key-management {
-            display: flex;
-            gap: 10px;
-            margin-top: 5px;
+        .key-list {
+            margin: 10px 0;
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .key-list.has-devices {
+            border: 1px solid #dee2e6;
+        }
+        
+        .key-list.no-devices {
+            border-bottom: 1px solid #dee2e6;
+            border-radius: 0;
         }
 
-        #deviceKey {
-            width: calc(100% - 170px);
+        .key-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .key-item:last-child {
+            border-bottom: none;
+        }
+
+        .key-info {
+            flex: 1;
+            margin: 0 10px;
+            min-width: 0;
+        }
+
+        .key-name {
+            font-weight: 500;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .key-value {
+            font-size: 0.9em;
+            color: #666;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .key-actions button {
+            margin-left: 5px;
+            padding: 3px 8px;
+            font-size: 0.9em;
+            background-color: #6c757d;
+        }
+
+        .key-actions button:hover {
+            background-color: #5a6268;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 12px 20px 20px;
+            border-radius: 5px;
+            min-width: 300px;
+        }
+
+        .modal-content h3 {
+            margin: 0 0 12px 0;
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+
+        .modal-input {
+            margin: 8px 0;
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .button-input {
+            width: auto;
         }
 
         .schedule-group {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 1rem;
         }
 
         #scheduleTime {
+            min-width: 200px;
             width: auto;
-        }
-
-        #timerStatus {
-            margin-top: 1rem;
-            padding: 0.5rem;
-            border-radius: 0.25rem;
-            background-color: #e2e3e5;
-        }
-
-        .combo-box {
-            position: relative;
-            display: inline-block;
-            width: 100%;
-        }
-
-        .radio-group label {
-            display: inline-flex;
-            align-items: center;
-            margin-right: 1rem;
-        }
-
-        .radio-group input[type="radio"] {
-            width: auto;
-            margin-right: 0.5rem;
-        }
-
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .checkbox-group input[type="checkbox"] {
-            width: auto;
-            margin: 0;
-        }
-
-        .key-management button {
-            flex-shrink: 0;
         }
 
         .critical-warning {
@@ -133,15 +180,53 @@
             display: none;
         }
 
+        #timerStatus {
+            margin-top: 1rem;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            background-color: #e2e3e5;
+        }
+
+        .radio-group label {
+            display: inline-flex;
+            align-items: center;
+            margin-right: 1rem;
+            white-space: nowrap;
+        }
+
         .volume-group {
             display: none;
             align-items: center;
             gap: 10px;
             margin-top: 0.5rem;
         }
+        
+        .checkbox-group {
+            display: inline-flex;
+            align-items: center;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .device-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
 
-        #volume {
-            width: 80px;
+        .device-header label {
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        .device-header button {
+            margin: 0;
+            padding: 0.25rem 0.75rem;
+            font-size: 0.875rem;
+            min-height: 32px;
+            border: 1px solid #007bff;
+            order: 2; /* 确保按钮在右侧 */
+            height: fit-content;
         }
     </style>
 </head>
@@ -150,22 +235,12 @@
     
     <form id="messageForm">
         <div class="form-group">
-            <label class="required">设备Key</label>
-            <div class="key-management">
-                <div class="combo-box">
-                    <input list="deviceKeys" 
-                            id="deviceKey" 
-                            required
-                            placeholder="选择或输入设备Key"
-                            autocomplete="off">
-                    <datalist id="deviceKeys">
-                        <option value="">请选择设备Key</option>
-                    </datalist>
-                </div>
-                <button type="button" onclick="addPresetKey()">添加</button>
-                <button type="button" onclick="editPresetKey()">编辑</button>
-                <button type="button" onclick="removePresetKey()">删除</button>
+            <div class="device-header">
+                <label class="required">设备管理</label>
+                <button type="button" onclick="showDeviceModal()" style="margin-top: 10px;">添加设备</button>
             </div>
+            <div class="key-list" id="keyList"></div>
+            <input type="hidden" id="deviceKey" required>
         </div>
 
         <div class="form-group">
@@ -243,67 +318,215 @@
     <div id="result"></div>
     <div id="timerStatus"></div>
 
+    <!-- 设备管理模态框 -->
+    <div id="deviceModal" class="modal">
+        <div class="modal-content">
+            <h3 id="modalTitle">添加设备</h3>
+            <input type="text" id="deviceName" class="modal-input" placeholder="设备名称">
+            <input type="text" id="deviceKeyInput" class="modal-input" placeholder="设备Key" required>
+            <div style="text-align: right; margin-top: 15px;">
+                <button onclick="hideDeviceModal()">取消</button>
+                <button onclick="saveDevice()" style="margin-left: 10px;">保存</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        let presetKeys = JSON.parse(localStorage.getItem('barkPresetKeys')) || [];
+        let devices = JSON.parse(localStorage.getItem('barkDevices')) || [];
+        let editingIndex = -1;
         let timeoutId = null;
         let intervalId = null;
 
-        // 初始化预设Key
-        function initPresetKeys() {
-            const datalist = document.getElementById('deviceKeys');
-            datalist.innerHTML = '<option value="">请选择设备Key</option>';
-            presetKeys.forEach(key => {
-                const option = document.createElement('option');
-                option.value = key;
-                datalist.appendChild(option);
+        // 初始化设备列表
+        function initDevices() {
+            const list = document.getElementById('keyList');
+            list.innerHTML = '';
+            if (devices.length === 0) {
+                list.classList.remove('has-devices');
+                list.classList.add('no-devices');
+            }
+            else {
+                list.classList.remove('no-devices');
+            list.classList.add('has-devices');
+            }
+
+            devices.forEach((device, index) => {
+                const item = document.createElement('div');
+                item.className = 'key-item';
+                item.innerHTML = `
+                    <input class="button-input" type="radio" name="selectedDevice" 
+                            value="${device.key}" 
+                            ${index === 0 ? 'checked' : ''}
+                            onchange="updateSelectedKey('${device.key}')">
+                    <div class="key-info">
+                        <div class="key-name">${device.name || '未命名设备'}</div>
+                        <div class="key-value">${device.key}</div>
+                    </div>
+                    <div class="key-actions">
+                        <button type="button" onclick="editDevice(${index})">编辑</button>
+                        <button type="button" onclick="deleteDevice(${index})">删除</button>
+                    </div>
+                `;
+                list.appendChild(item);
             });
-        }
 
-        // 添加预设Key
-        function addPresetKey() {
-            const key = document.getElementById('deviceKey').value.trim();
-            if (key && !presetKeys.includes(key)) {
-                presetKeys.push(key);
-                localStorage.setItem('barkPresetKeys', JSON.stringify(presetKeys));
-                initPresetKeys();
-                document.getElementById('deviceKey').value = key;
+            if (devices.length > 0) {
+                document.getElementById('deviceKey').value = devices[0].key;
             }
         }
 
-        // 编辑预设Key
-        function editPresetKey() {
-            const oldKey = document.getElementById('deviceKey').value.trim();
-            if (!presetKeys.includes(oldKey)) return;
+        // 显示设备模态框
+        function showDeviceModal(index = -1) {
+            editingIndex = index;
+            const modal = document.getElementById('deviceModal');
+            const title = document.getElementById('modalTitle');
+            const nameInput = document.getElementById('deviceName');
+            const keyInput = document.getElementById('deviceKeyInput');
 
-            const newKey = prompt('请输入新的设备Key', oldKey);
-            if (newKey && newKey !== oldKey) {
-                const index = presetKeys.indexOf(oldKey);
-                presetKeys[index] = newKey.trim();
-                localStorage.setItem('barkPresetKeys', JSON.stringify(presetKeys));
-                initPresetKeys();
-                document.getElementById('deviceKey').value = newKey;
+            if (index >= 0) {
+                title.textContent = '编辑设备';
+                nameInput.value = devices[index].name || '';
+                keyInput.value = devices[index].key;
+            } else {
+                title.textContent = '添加设备';
+                nameInput.value = '';
+                keyInput.value = '';
+            }
+            
+            modal.style.display = 'flex';
+        }
+
+        function hideDeviceModal() {
+            document.getElementById('deviceModal').style.display = 'none';
+        }
+
+        // 保存设备
+        function saveDevice() {
+            const name = document.getElementById('deviceName').value.trim();
+            const key = document.getElementById('deviceKeyInput').value.trim();
+            
+            if (!key) {
+                alert('设备Key不能为空');
+                return;
+            }
+
+             // 新增设备Key长度验证
+            if (key.length !== 22) {
+                alert('输入的设备key不符合要求');
+                return;
+            }
+
+            // 检查Key是否已存在
+            if (editingIndex === -1 && devices.some(d => d.key === key)) {
+                alert('该设备Key已存在');
+                return;
+            }
+
+            if (editingIndex >= 0) {
+                devices[editingIndex] = { name, key };
+            } else {
+                devices.push({ name, key });
+            }
+            
+            localStorage.setItem('barkDevices', JSON.stringify(devices));
+            initDevices();
+            hideDeviceModal();
+        }
+
+        // 删除设备
+        function deleteDevice(index) {
+            if (confirm(`确定要删除设备 "${devices[index].name || devices[index].key}" 吗？`)) {
+                devices.splice(index, 1);
+                localStorage.setItem('barkDevices', JSON.stringify(devices));
+                initDevices();
             }
         }
 
-        // 删除预设Key
-        function removePresetKey() {
-            const key = document.getElementById('deviceKey').value.trim();
-            presetKeys = presetKeys.filter(k => k !== key);
-            localStorage.setItem('barkPresetKeys', JSON.stringify(presetKeys));
-            initPresetKeys();
-            document.getElementById('deviceKey').value = '';
+        // 更新选中的设备Key
+        function updateSelectedKey(key) {
+            document.getElementById('deviceKey').value = key;
         }
 
-        // 定时发送处理
+        // 初始化设备列表
+        initDevices();
+
+        // 消息类型变化监听
+        document.querySelectorAll('input[name="level"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                const isCritical = e.target.value === 'critical';
+                document.querySelector('.volume-group').style.display = isCritical ? 'flex' : 'none';
+                document.querySelector('.critical-warning').style.display = isCritical ? 'block' : 'none';
+            });
+        });
+
+        // 定时发送切换
+        document.getElementById('scheduleCheck').addEventListener('change', (e) => {
+            document.getElementById('scheduleTime').disabled = !e.target.checked;
+        });
+
+        // 表单提交处理
+        document.getElementById('messageForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const deviceKey = document.getElementById('deviceKey').value;
+            if (!deviceKey) {
+                alert('请选择设备');
+                return;
+            }
+
+            const title = document.getElementById('title').value.trim();
+            const body = document.getElementById('body').value.trim();
+            
+            const params = {
+                url: document.getElementById('url').value.trim(),
+                group: document.getElementById('group').value.trim(),
+                icon: document.getElementById('icon').value.trim(),
+                sound: document.getElementById('sound').value,
+                level: document.querySelector('input[name="level"]:checked').value,
+                volume: document.getElementById('volume').value
+            };
+
+            // 构建请求URL
+            let apiUrl = `https://api.day.app/${encodeURIComponent(deviceKey)}/`;
+            if (title) apiUrl += `${encodeURIComponent(title)}/`;
+            apiUrl += encodeURIComponent(body);
+
+            // 添加查询参数
+            const queryParams = [];
+            Object.keys(params).forEach(key => {
+                if (params[key]) {
+                    if (key === 'volume' && params.level !== 'critical') return;
+                    queryParams.push(`${key}=${encodeURIComponent(params[key])}`);
+                }
+            });
+            
+            if (params.level === 'critical') {
+                const volume = Math.min(10, Math.max(0, params.volume));
+                queryParams.push(`level=critical&volume=${volume}`);
+            }
+
+            if (queryParams.length > 0) {
+                apiUrl += `?${queryParams.join('&')}`;
+            }
+
+            // 定时发送处理
+            if (document.getElementById('scheduleCheck').checked) {
+                scheduleSend(apiUrl);
+            } else {
+                try {
+                    const response = await fetch(apiUrl);
+                    const result = await response.json();
+                    handleResponse(response, result);
+                } catch (error) {
+                    handleError(error);
+                }
+            }
+        });
+
+        // 定时发送逻辑
         function scheduleSend(apiUrl) {
-            if (timeoutId) {
-                clearTimeout(timeoutId);
-                timeoutId = null;
-            }
-            if (intervalId) {
-                clearInterval(intervalId);
-                intervalId = null;
-            }
+            if (timeoutId) clearTimeout(timeoutId);
+            if (intervalId) clearInterval(intervalId);
 
             const scheduleTime = new Date(document.getElementById('scheduleTime').value);
             const now = new Date();
@@ -314,7 +537,6 @@
                 return;
             }
 
-            // 实时更新倒计时
             function updateCountdown() {
                 diff -= 1000;
                 if (diff <= 0) {
@@ -348,78 +570,6 @@
             document.getElementById('timerStatus').textContent = text;
         }
 
-        // 初始化
-        initPresetKeys();
-        
-        // 监听消息类型变化
-        document.querySelectorAll('input[name="level"]').forEach(radio => {
-            radio.addEventListener('change', (e) => {
-                const isCritical = e.target.value === 'critical';
-                document.querySelector('.volume-group').style.display = isCritical ? 'flex' : 'none';
-                document.querySelector('.critical-warning').style.display = isCritical ? 'block' : 'none';
-            });
-        });
-
-        // 定时发送切换
-        document.getElementById('scheduleCheck').addEventListener('change', (e) => {
-            document.getElementById('scheduleTime').disabled = !e.target.checked;
-        });
-
-        // 表单提交
-        document.getElementById('messageForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const deviceKey = document.getElementById('deviceKey').value.trim();
-            const title = document.getElementById('title').value.trim();
-            const body = document.getElementById('body').value.trim();
-            
-            const params = {
-                url: document.getElementById('url').value.trim(),
-                group: document.getElementById('group').value.trim(),
-                icon: document.getElementById('icon').value.trim(),
-                sound: document.getElementById('sound').value,
-                level: document.querySelector('input[name="level"]:checked').value,
-                volume: document.getElementById('volume').value
-            };
-
-            // 构建请求URL
-            let apiUrl = `https://api.day.app/${encodeURIComponent(deviceKey)}/`;
-            if (title) apiUrl += `${encodeURIComponent(title)}/`;
-            apiUrl += encodeURIComponent(body);
-
-            // 添加查询参数
-            const queryParams = [];
-            Object.keys(params).forEach(key => {
-                if (params[key]) {
-                    if (key === 'volume' && params.level !== 'critical') return;
-                    queryParams.push(`${key}=${encodeURIComponent(params[key])}`);
-                }
-            });
-            
-            // 特殊处理重要警告参数
-            if (params.level === 'critical') {
-                const volume = Math.min(10, Math.max(0, params.volume));
-                queryParams.push(`level=critical&volume=${volume}`);
-            }
-
-            if (queryParams.length > 0) {
-                apiUrl += `?${queryParams.join('&')}`;
-            }
-
-            // 判断是否定时发送
-            if (document.getElementById('scheduleCheck').checked) {
-                scheduleSend(apiUrl);
-            } else {
-                try {
-                    const response = await fetch(apiUrl);
-                    const result = await response.json();
-                    handleResponse(response, result);
-                } catch (error) {
-                    handleError(error);
-                }
-            }
-        });
-
         // 处理响应
         function handleResponse(response, result) {
             const resultDiv = document.getElementById('result');
@@ -434,8 +584,10 @@
             }
             resultDiv.style.display = 'block';
         }
-
-        // 处理错误
+        function editDevice(index) {
+            showDeviceModal(index);
+        }
+        // 错误处理
         function handleError(error) {
             const resultDiv = document.getElementById('result');
             resultDiv.classList.add('error');
